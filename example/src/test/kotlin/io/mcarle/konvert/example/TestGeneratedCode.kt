@@ -2,6 +2,7 @@ package io.mcarle.konvert.example
 
 import io.mcarle.konvert.api.Konverter
 import org.junit.jupiter.api.Test
+import java.util.*
 
 class TestGeneratedCode {
 
@@ -118,5 +119,33 @@ class TestGeneratedCode {
         assert(person.address.city == dto.address.city)
         assert(person.address.country == dto.address.country)
         assert(person.age == dto.numberOfYearsSinceBirth.toLong())
+    }
+
+    @Test
+    fun userToDto() {
+        val mapper = Konverter.get<UserMapper>()
+        val id = UUID.randomUUID()
+        val user = User(
+            id = UserId(id)
+        )
+
+        val userDto = mapper.toDto(user)
+
+
+        assert(userDto.id == id)
+    }
+
+    @Test
+    fun userDtoToDomain() {
+        val mapper = Konverter.get<UserMapper>()
+        val id = UUID.randomUUID()
+        val userDto = UserDto(
+            id = id
+        )
+
+        val user = mapper.toDomain(userDto)
+
+
+        assert(user.id == UserId(id))
     }
 }
