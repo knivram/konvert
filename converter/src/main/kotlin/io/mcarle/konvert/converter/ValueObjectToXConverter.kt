@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import io.mcarle.konvert.converter.api.AbstractTypeConverter
 import io.mcarle.konvert.converter.api.TypeConverter
 import io.mcarle.konvert.converter.api.classDeclaration
+import io.mcarle.konvert.converter.api.isNullable
 
 @AutoService(TypeConverter::class)
 class ValueObjectToXConverter : AbstractTypeConverter() {
@@ -13,15 +14,19 @@ class ValueObjectToXConverter : AbstractTypeConverter() {
     override val enabledByDefault: Boolean = true
 
     override fun matches(source: KSType, target: KSType): Boolean =
-        handleNullable(source, target) { sourceNotNullable, targetNotNullable ->
+        handleNullable(source, target) { sourceNotNullable, _ ->
             sourceNotNullable.classDeclaration()?.let {
                 val valueProperty = it.getAllProperties().singleOrNull() ?: return@handleNullable false
-                return@handleNullable valueProperty.simpleName.asString() == "value" && targetNotNullable.isAssignableFrom(valueProperty.type.resolve())
-            } ?: return@handleNullable false
+                return@handleNullable valueProperty.simpleName.asString() == "value" && target.isAssignableFrom(valueProperty.type.resolve())
+            } ?: false
         }
 
 
     override fun convert(fieldName: String, source: KSType, target: KSType): CodeBlock {
-        return CodeBlock.of("$fieldName.value")
+        return if (source.isNullable()) {
+            CodeBlock.of("$fieldName?.value")
+        } else {
+            CodeBlock.of("$fieldName.value")
+        }
     }
 }
